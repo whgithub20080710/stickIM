@@ -58,6 +58,20 @@ func userLogin(writer http.ResponseWriter, request *http.Request) {
 
 }
 
+func RegisterView()  {
+	tpl,err := template.ParseGlob("view/**/*")
+	if(err != nil){
+		// 打印错误信息并退出
+		log.Fatal(err.Error())
+	}
+	for _,v := range tpl.Templates(){
+		tplname := v.Name()
+		http.HandleFunc(tplname, func(writer http.ResponseWriter, request *http.Request) {
+			tpl.ExecuteTemplate(writer,tplname,nil)
+		})
+	}
+}
+
 func main() {
 
 	// 绑定请求和处理函数
@@ -67,28 +81,29 @@ func main() {
 	//http.Handle("/",http.FileServer(http.Dir(".")))
 	http.Handle("/asset/",http.FileServer(http.Dir(".")))
 
-	// 登录页面
-	http.HandleFunc("/user/login.shtml", func(writer http.ResponseWriter, request *http.Request) {
-		// 解析
-		tpl,err := template.ParseFiles("view/user/login.html")
-		if(err != nil){
-			// 打印错误信息并退出
-			log.Fatal(err.Error())
-		}
-		tpl.ExecuteTemplate(writer,"/user/login.shtml",nil)
-	})
+	//// 登录页面
+	//http.HandleFunc("/user/login.shtml", func(writer http.ResponseWriter, request *http.Request) {
+	//	// 解析
+	//	tpl,err := template.ParseFiles("view/user/login.html")
+	//	if(err != nil){
+	//		// 打印错误信息并退出
+	//		log.Fatal(err.Error())
+	//	}
+	//	tpl.ExecuteTemplate(writer,"/user/login.shtml",nil)
+	//})
+	//
+	//// 注册页面
+	//http.HandleFunc("/user/register.shtml", func(writer http.ResponseWriter, request *http.Request) {
+	//	// 解析
+	//	tpl,err := template.ParseFiles("view/user/register.html")
+	//	if(err != nil){
+	//		// 打印错误信息并退出
+	//		log.Fatal(err.Error())
+	//	}
+	//	tpl.ExecuteTemplate(writer,"/user/register.shtml",nil)
+	//})
 
-	// 注册页面
-	http.HandleFunc("/user/register.shtml", func(writer http.ResponseWriter, request *http.Request) {
-		// 解析
-		tpl,err := template.ParseFiles("view/user/register.html")
-		if(err != nil){
-			// 打印错误信息并退出
-			log.Fatal(err.Error())
-		}
-		tpl.ExecuteTemplate(writer,"/user/register.shtml",nil)
-	})
-
+	RegisterView()
 	// 启动web服务器
 	http.ListenAndServe(":8080",nil)
 }
