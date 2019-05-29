@@ -58,8 +58,14 @@ func userLogin(writer http.ResponseWriter, request *http.Request) {
 }
 
 func main() {
+
 	// 绑定请求和处理函数
 	http.HandleFunc("/user/login", userLogin)
+
+	// 提供静态资源目录支持
+	//http.Handle("/",http.FileServer(http.Dir(".")))
+	http.Handle("/asset/",http.FileServer(http.Dir(".")))
+
 	// 启动web服务器
 	http.ListenAndServe(":8080",nil)
 }
