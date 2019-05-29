@@ -5,7 +5,26 @@ import (
 	"encoding/json"
 	"log"
 	"html/template"
+	"github.com/go-xorm/xorm"
+	_ "github.com/go-sql-driver/mysql"
+	"fmt"
 )
+
+var DbEngin *xorm.Engine
+func init()  {
+	drivename := "mysql"
+	DsName := "root:123456@(127.0.0.1:3306)/chat?charset=utf8"
+	DbEngin,err := xorm.NewEngine(drivename,DsName)
+	if nil != err{
+		log.Fatal(err.Error())
+	}
+	// 是否显示sql
+	DbEngin.ShowSQL(true)
+	// 设置最大打开连接数
+	DbEngin.SetMaxOpenConns(2)
+
+	fmt.Println("init data base ok")
+}
 
 type H struct {
 	Code int `json:"code"`
