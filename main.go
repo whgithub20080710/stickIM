@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"log"
+	"html/template"
 )
 
 type H struct {
@@ -65,6 +66,28 @@ func main() {
 	// 提供静态资源目录支持
 	//http.Handle("/",http.FileServer(http.Dir(".")))
 	http.Handle("/asset/",http.FileServer(http.Dir(".")))
+
+	// 登录页面
+	http.HandleFunc("/user/login.shtml", func(writer http.ResponseWriter, request *http.Request) {
+		// 解析
+		tpl,err := template.ParseFiles("view/user/login.html")
+		if(err != nil){
+			// 打印错误信息并退出
+			log.Fatal(err.Error())
+		}
+		tpl.ExecuteTemplate(writer,"/user/login.shtml",nil)
+	})
+
+	// 注册页面
+	http.HandleFunc("/user/register.shtml", func(writer http.ResponseWriter, request *http.Request) {
+		// 解析
+		tpl,err := template.ParseFiles("view/user/register.html")
+		if(err != nil){
+			// 打印错误信息并退出
+			log.Fatal(err.Error())
+		}
+		tpl.ExecuteTemplate(writer,"/user/register.shtml",nil)
+	})
 
 	// 启动web服务器
 	http.ListenAndServe(":8080",nil)
