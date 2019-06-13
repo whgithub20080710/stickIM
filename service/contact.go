@@ -96,3 +96,19 @@ func (service *ContactService) SearchFriend(userId int64) ([]model.User){
 	DbEngin.In("id",objIds).Find(&coms)
 	return coms
 }
+
+func (service *ContactService) SearchComunity(userId int64) ([]model.Community){
+	conconts := make([]model.Contact,0)
+	comIds :=make([]int64,0)
+
+	DbEngin.Where("ownerid = ? and cate = ?",userId,model.CONCAT_CATE_COMUNITY).Find(&conconts)
+	for _,v := range conconts{
+		comIds = append(comIds,v.Dstobj);
+	}
+	coms := make([]model.Community,0)
+	if len(comIds)== 0{
+		return coms
+	}
+	DbEngin.In("id",comIds).Find(&coms)
+	return coms
+}

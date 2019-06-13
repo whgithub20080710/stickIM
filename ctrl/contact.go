@@ -18,6 +18,14 @@ func LoadFriend(w http.ResponseWriter, req *http.Request){
 	util.RespOkList(w,users,len(users))
 }
 
+func LoadCommunity(w http.ResponseWriter, req *http.Request){
+	var arg args.ContactArg
+	//如果这个用的上,那么可以直接
+	util.Bind(req,&arg)
+	comunitys := contactService.SearchComunity(arg.Userid)
+	util.RespOkList(w,comunitys,len(comunitys))
+}
+
 func JoinCommunity(w http.ResponseWriter, req *http.Request){
 	var arg args.ContactArg
 
