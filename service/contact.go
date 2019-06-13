@@ -63,7 +63,17 @@ func (service *ContactService) AddFriend(
 		}
 	}
 }
+func (service *ContactService) SearchComunityIds(userId int64) (comIds []int64){
+	// 获取用户全部群ID
+	conconts := make([]model.Contact,0)
+	comIds =make([]int64,0)
 
+	DbEngin.Where("ownerid = ? and cate = ?",userId,model.CONCAT_CATE_COMUNITY).Find(&conconts)
+	for _,v := range conconts{
+		comIds = append(comIds,v.Dstobj);
+	}
+	return comIds
+}
 //加群
 func (service *ContactService) JoinCommunity(userId,comId int64) error{
 	cot := model.Contact{
@@ -78,6 +88,49 @@ func (service *ContactService) JoinCommunity(userId,comId int64) error{
 		return err
 	}else{
 		return nil
+	}
+}
+
+//建群
+func (service *ContactService) CreateCommunity(comm model.Community) (ret model.Community,err error){
+	if len(comm.Name)==0{
+		err = errors.New("缺少群名称")
+		return ret,err
+	}
+	if comm.Ownerid==0{
+		err = errors.New("请先登录")
+		return ret,err
+	}
+	com := model.Community{
+		Ownerid:comm.Ownerid,
+	}
+	num,err := DbEngin.Count(&com)
+
+	if(num>5){
+		err = errors.New("一个用户最多只能创见5个群")
+		return com,err
+	}else{
+		comm.Createat=time.Now()
+		session := DbEngin.NewSession()
+		session.Begin()
+		_,err = session.InsertOne(&comm)
+		if err!=nil{
+			session.Rollback();
+			return com,err
+		}
+		_,err =session.InsertOne(
+			model.Contact{
+				Ownerid:comm.Ownerid,
+				Dstobj:comm.Id,
+				Cate:model.CONCAT_CATE_COMUNITY,
+				Createat:time.Now(),
+			})
+		if err!=nil{
+			session.Rollback();
+		}else{
+			session.Commit()
+		}
+		return com,err
 	}
 }
 
