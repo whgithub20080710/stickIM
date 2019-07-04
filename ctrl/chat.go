@@ -7,17 +7,14 @@ import (
 			"sync"
 		"strconv"
 	"log"
-	"fmt"
 	"encoding/json"
+	"net"
 )
 
 const (
 	CMD_SINGLE_MSG = 10
 	CMD_ROOM_MSG   = 11
 	CMD_HEART      = 0
-	CMD_ACK        = 1
-	CMD_ENTRY_ROOM = 2
-	CMD_EXIT_ROOM  = 3
 )
 type Message struct {
 	Id      int64  `json:"id,omitempty" form:"id"` //消息ID
@@ -113,7 +110,7 @@ func Chat(writer http.ResponseWriter,
 	go sendproc(node)
 	// 完成接收逻辑
 	go recvproc(node)
-	//
+	log.Printf("<-%d\n",userId)
 	sendMsg(userId,[]byte("hello,world!"))
 }
 
@@ -149,9 +146,72 @@ func recvproc(node *Node) {
 			log.Println(err.Error())
 			return
 		}
-		dispatch(data)
-		fmt.Printf("recv<=%s",data)
+		//dispatch(data)
+		//把消息广播到局域网
+		broadMsg(data)
+		log.Printf("[ws]<=%s\n",data)
 	}
+}
+func init(){
+	go udpsendproc()
+	go udprecvproc()
+}
+
+//用来存放发送的要广播的数据
+var  udpsendchan chan []byte=make(chan []byte,1024)
+//todo 将消息广播到局域网
+func broadMsg(data []byte){
+	udpsendchan<-data
+}
+//todo 完成udp数据的发送协程
+func udpsendproc(){
+	log.Println("start udpsendproc")
+	//todo 使用udp协议拨号
+	con,err:=net.DialUDP("udp",nil,
+		&net.UDPAddr{
+			IP:net.IPv4(192,168,0,255),
+			Port:3000,
+		})
+	defer con.Close()
+	if err!=nil{
+		log.Println(err.Error())
+		return
+	}
+	//todo 通过的到的con发送消息
+	//con.Write()
+	for{
+		select {
+		case data := <- udpsendchan:
+			_,err=con.Write(data)
+			if err!=nil{
+				log.Println(err.Error())
+				return
+			}
+		}
+	}
+}
+//todo 完成upd接收并处理功能
+func udprecvproc(){
+	log.Println("start udprecvproc")
+	//todo 监听udp广播端口
+	con,err:=net.ListenUDP("udp",&net.UDPAddr{
+		IP:net.IPv4zero,
+		Port:3000,
+	})
+	defer con.Close()
+	if err!=nil{log.Println(err.Error())}
+	//TODO 处理端口发过来的数据
+	for{
+		var buf [512]byte
+		n,err:=con.Read(buf[0:])
+		if err!=nil{
+			log.Println(err.Error())
+			return
+		}
+		//直接数据处理
+		dispatch(buf[0:n])
+	}
+	log.Println("stop updrecvproc")
 }
 //后端调度逻辑处理
 func dispatch(data[]byte){
